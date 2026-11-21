@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../auth/providers/auth_provider.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Column(
@@ -16,24 +18,32 @@ class DashboardPage extends StatelessWidget {
           children: [
             Text(
               AppConfig.appName,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 21,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 21),
             ),
             Text(
               'Personal Finance',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
           ],
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
+            tooltip: 'Logout',
+            onPressed: () async {
+              try {
+                await ref.read(authRepositoryProvider).signOut();
+              } catch (error) {
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Logout gagal: $error'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.logout_rounded),
           ),
           const SizedBox(width: 8),
         ],
@@ -55,10 +65,7 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 6),
               const Text(
                 'Kelola keuanganmu dengan lebih mudah.',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 24),
 
@@ -82,10 +89,7 @@ class DashboardPage extends StatelessWidget {
                         SizedBox(width: 8),
                         Text(
                           'Total Saldo',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -101,10 +105,7 @@ class DashboardPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text(
                       'Seluruh rekening',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -115,10 +116,7 @@ class DashboardPage extends StatelessWidget {
               // Ringkasan
               const Text(
                 'Ringkasan Keuangan',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 14),
 
@@ -148,10 +146,7 @@ class DashboardPage extends StatelessWidget {
 
               const Text(
                 'Aktivitas Terbaru',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
 
@@ -172,9 +167,7 @@ class DashboardPage extends StatelessWidget {
                     SizedBox(height: 12),
                     Text(
                       'Belum ada transaksi',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     SizedBox(height: 5),
                     Text(
@@ -223,18 +216,12 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 6),
           Text(
             CurrencyFormatter.format(amount),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),

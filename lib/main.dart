@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,15 +27,11 @@ Future<void> main() async {
 
   // Inisialisasi Supabase.
   await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseKey,
+    url: dotenv.env['SUPABASE_URL']!,
+    publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   debugPrint('FinTrack: Supabase berhasil diinisialisasi.');
 
-  runApp(
-    const ProviderScope(
-      child: FinTrackApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: FinTrackApp()));
 }
