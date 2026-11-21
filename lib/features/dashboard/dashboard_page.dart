@@ -1,10 +1,14 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../auth/providers/auth_provider.dart';
 import '../accounts/pages/accounts_page.dart';
 import '../accounts/providers/account_provider.dart';
+import '../transactions/models/transaction_model.dart';
+import '../transactions/pages/transaction_form_page.dart';
+import '../transactions/pages/transactions_page.dart';
+import '../transactions/providers/transaction_provider.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -12,24 +16,71 @@ import '../../core/utils/currency_formatter.dart';
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
-  Future<void> _openAccounts(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _openAccounts(BuildContext context, WidgetRef ref) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AccountsPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const AccountsPage()),
     );
 
     ref.invalidate(accountsProvider);
+  }
+
+  Future<void> _openTransactions(BuildContext context, WidgetRef ref) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TransactionsPage()),
+    );
+
+    _refreshData(ref);
+  }
+
+  Future<void> _addTransaction(BuildContext context, WidgetRef ref) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const TransactionFormPage()),
+    );
+
+    if (result == true) {
+      _refreshData(ref);
+    }
+  }
+
+  Future<void> _refreshData(WidgetRef ref) async {
+    ref.invalidate(accountsProvider);
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(incomeCategoriesProvider);
+    ref.invalidate(expenseCategoriesProvider);
+
+    await Future.wait([
+      ref.read(accountsProvider.future),
+      ref.read(transactionsProvider.future),
+    ]);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final totalBalanceAsync = ref.watch(totalBalanceProvider);
     final accountsAsync = ref.watch(activeAccountsProvider);
+    final transactionsAsync = ref.watch(transactionsProvider);
+
+    final transactions =
+        transactionsAsync.asData?.value ?? <TransactionModel>[];
+
+    final now = DateTime.now();
+
+    final monthlyTransactions = transactions.where((transaction) {
+      return transaction.isActive &&
+          transaction.transactionDate.year == now.year &&
+          transaction.transactionDate.month == now.month;
+    }).toList();
+
+    final totalIncome = monthlyTransactions
+        .where((transaction) => transaction.isIncome)
+        .fold<double>(0, (sum, transaction) => sum + transaction.amount);
+
+    final totalExpense = monthlyTransactions
+        .where((transaction) => transaction.isExpense)
+        .fold<double>(0, (sum, transaction) => sum + transaction.amount);
 
     return Scaffold(
       appBar: AppBar(
@@ -38,17 +89,11 @@ class DashboardPage extends ConsumerWidget {
           children: [
             Text(
               AppConfig.appName,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 21,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 21),
             ),
             Text(
               'Personal Finance',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -74,13 +119,9 @@ class DashboardPage extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(accountsProvider);
-            await ref.read(accountsProvider.future);
-          },
+          onRefresh: () => _refreshData(ref),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
@@ -98,10 +139,7 @@ class DashboardPage extends ConsumerWidget {
                 const SizedBox(height: 6),
                 const Text(
                   'Kelola keuanganmu dengan lebih mudah.',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                 ),
 
                 const SizedBox(height: 24),
@@ -134,7 +172,6 @@ class DashboardPage extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 14),
-
                       totalBalanceAsync.when(
                         data: (balance) => Text(
                           CurrencyFormatter.format(balance),
@@ -155,20 +192,13 @@ class DashboardPage extends ConsumerWidget {
                         ),
                         error: (_, _) => const Text(
                           'Gagal memuat saldo',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
-
                       const SizedBox(height: 8),
                       const Text(
                         'Seluruh rekening aktif',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -193,7 +223,6 @@ class DashboardPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
 
                 accountsAsync.when(
@@ -247,9 +276,7 @@ class DashboardPage extends ConsumerWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _accountTypeLabel(
-                                          account.accountType,
-                                        ),
+                                        _accountTypeLabel(account.accountType),
                                         style: const TextStyle(
                                           color: AppTheme.textSecondary,
                                           fontSize: 12,
@@ -272,7 +299,6 @@ class DashboardPage extends ConsumerWidget {
                             ),
                           ),
                         ),
-
                         if (accounts.length > 3)
                           Align(
                             alignment: Alignment.center,
@@ -304,80 +330,172 @@ class DashboardPage extends ConsumerWidget {
                   ),
                 ),
 
-                const SizedBox(height: 12),
-                // Ringkasan
-                const Text(
-                  'Ringkasan Keuangan',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(height: 24),
+
+                // Ringkasan keuangan
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ringkasan Keuangan',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      DateFormat('MMMM yyyy', 'id_ID').format(now),
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14),
 
-                const Row(
+                Row(
                   children: [
                     Expanded(
                       child: _SummaryCard(
                         title: 'Pemasukan',
-                        amount: 0,
+                        amount: totalIncome,
                         icon: Icons.trending_up_rounded,
                         color: Colors.green,
+                        isLoading: transactionsAsync.isLoading,
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: _SummaryCard(
                         title: 'Pengeluaran',
-                        amount: 0,
+                        amount: totalExpense,
                         icon: Icons.trending_down_rounded,
                         color: Colors.red,
+                        isLoading: transactionsAsync.isLoading,
                       ),
                     ),
                   ],
                 ),
 
+                if (transactionsAsync.hasError) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Gagal memuat ringkasan transaksi: '
+                    '${transactionsAsync.error}',
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
+
                 const SizedBox(height: 26),
 
-                const Text(
-                  'Aktivitas Terbaru',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // Aktivitas terbaru
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Aktivitas Terbaru',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _openTransactions(context, ref),
+                      child: const Text('Lihat Semua'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                transactionsAsync.when(
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                  child: const Column(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 42,
-                        color: AppTheme.textSecondary,
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Belum ada transaksi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                  error: (error, _) => Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 34,
                         ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Transaksi kamu akan muncul di sini.',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
+                        const SizedBox(height: 8),
+                        const Text('Gagal memuat aktivitas transaksi'),
+                        const SizedBox(height: 8),
+                        Text(
+                          error.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                        TextButton(
+                          onPressed: () => ref.invalidate(transactionsProvider),
+                          child: const Text('Coba lagi'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return _EmptyTransactions(
+                        onAdd: () => _addTransaction(context, ref),
+                      );
+                    }
+
+                    final recentTransactions = items.take(5).toList();
+
+                    final accounts = accountsAsync.asData?.value ?? [];
+                    final accountNames = {
+                      for (final account in accounts) account.id: account.name,
+                    };
+
+                    return Column(
+                      children: [
+                        ...recentTransactions.map(
+                          (transaction) => _RecentTransactionTile(
+                            transaction: transaction,
+                            accountName:
+                                accountNames[transaction.accountId] ??
+                                'Akun tidak ditemukan',
+                          ),
+                        ),
+                        if (items.length > 5)
+                          Align(
+                            alignment: Alignment.center,
+                            child: TextButton(
+                              onPressed: () => _openTransactions(context, ref),
+                              child: const Text('Lihat transaksi lainnya'),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tombol tambah transaksi
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _addTransaction(context, ref),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Tambah Transaksi'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
                   ),
                 ),
               ],
@@ -418,9 +536,7 @@ class DashboardPage extends ConsumerWidget {
 class _EmptyAccounts extends StatelessWidget {
   final VoidCallback onAdd;
 
-  const _EmptyAccounts({
-    required this.onAdd,
-  });
+  const _EmptyAccounts({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -447,10 +563,7 @@ class _EmptyAccounts extends StatelessWidget {
           const Text(
             'Tambahkan rekening bank, e-wallet, atau uang tunai.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -464,17 +577,173 @@ class _EmptyAccounts extends StatelessWidget {
   }
 }
 
+class _EmptyTransactions extends StatelessWidget {
+  final VoidCallback onAdd;
+
+  const _EmptyTransactions({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.receipt_long_outlined,
+            size: 42,
+            color: AppTheme.textSecondary,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Belum ada transaksi',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'Transaksi kamu akan muncul di sini.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add),
+            label: const Text('Catat Transaksi'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentTransactionTile extends StatelessWidget {
+  final TransactionModel transaction;
+  final String accountName;
+
+  const _RecentTransactionTile({
+    required this.transaction,
+    required this.accountName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCancelled = transaction.isCancelled;
+    final isIncome = transaction.isIncome;
+
+    final color = isCancelled
+        ? Colors.grey
+        : isIncome
+        ? Colors.green
+        : Colors.red;
+
+    final title = transaction.description?.trim().isNotEmpty == true
+        ? transaction.description!.trim()
+        : isIncome
+        ? 'Pemasukan'
+        : 'Pengeluaran';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isCancelled ? Border.all(color: Colors.grey.shade300) : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isCancelled
+                  ? Icons.block_rounded
+                  : isIncome
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: isCancelled ? Colors.grey : null,
+                    decoration: isCancelled ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$accountName • '
+                  '${DateFormat('dd MMM yyyy', 'id_ID').format(transaction.transactionDate)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+                if (isCancelled) ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Dibatalkan',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${isIncome ? '+' : '-'}'
+            '${CurrencyFormatter.format(transaction.amount)}',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              decoration: isCancelled ? TextDecoration.lineThrough : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SummaryCard extends StatelessWidget {
   final String title;
   final num amount;
   final IconData icon;
   final Color color;
+  final bool isLoading;
 
   const _SummaryCard({
     required this.title,
     required this.amount,
     required this.icon,
     required this.color,
+    this.isLoading = false,
   });
 
   @override
@@ -492,19 +761,28 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 6),
-          Text(
-            CurrencyFormatter.format(amount),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          if (isLoading)
+            const SizedBox(
+              height: 22,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            Text(
+              CurrencyFormatter.format(amount),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-          ),
         ],
       ),
     );
