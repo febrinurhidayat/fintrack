@@ -206,7 +206,7 @@ class TransactionsPage extends ConsumerWidget {
                         title: 'Pemasukan',
                         amount: totalIncome,
                         color: Colors.green,
-                        icon: Icons.arrow_downward_rounded,
+                        icon: Icons.trending_up_rounded,
                         formatCurrency: _formatCurrency,
                       ),
                     ),
@@ -216,7 +216,7 @@ class TransactionsPage extends ConsumerWidget {
                         title: 'Pengeluaran',
                         amount: totalExpense,
                         color: Colors.red,
-                        icon: Icons.arrow_upward_rounded,
+                        icon: Icons.trending_down_rounded,
                         formatCurrency: _formatCurrency,
                       ),
                     ),
@@ -308,8 +308,8 @@ class TransactionsPage extends ConsumerWidget {
                                 isCancelled
                                     ? Icons.block_outlined
                                     : isIncome
-                                    ? Icons.arrow_downward_rounded
-                                    : Icons.arrow_upward_rounded,
+                                    ? Icons.trending_up_rounded
+                                    : Icons.trending_down_rounded,
                                 color: color,
                               ),
                             ),

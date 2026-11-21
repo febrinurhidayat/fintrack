@@ -128,22 +128,6 @@ class DashboardPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Selamat datang!',
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Kelola keuanganmu dengan lebih mudah.',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-                ),
-
-                const SizedBox(height: 24),
-
                 // Total saldo
                 Container(
                   width: double.infinity,
@@ -483,21 +467,6 @@ class DashboardPage extends ConsumerWidget {
                     );
                   },
                 ),
-
-                const SizedBox(height: 20),
-
-                // Tombol tambah transaksi
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () => _addTransaction(context, ref),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Tambah Transaksi'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -668,8 +637,8 @@ class _RecentTransactionTile extends StatelessWidget {
               isCancelled
                   ? Icons.block_rounded
                   : isIncome
-                  ? Icons.arrow_downward_rounded
-                  : Icons.arrow_upward_rounded,
+                  ? Icons.trending_up_rounded
+                  : Icons.trending_down_rounded,
               color: color,
             ),
           ),

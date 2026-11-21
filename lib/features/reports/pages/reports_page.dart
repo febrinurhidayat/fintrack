@@ -56,6 +56,18 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           'Laporan Keuangan',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Muat ulang',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () {
+              ref.invalidate(reportTransactionsProvider(_selectedMonth));
+              ref.invalidate(incomeCategoriesProvider);
+              ref.invalidate(expenseCategoriesProvider);
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: reportAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -367,24 +379,57 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Widget _buildComparisonChart(double income, double expense) {
-    final maxValue = [income, expense].reduce((a, b) => a > b ? a : b);
+    final maxValue = income > expense ? income : expense;
+    final chartMaxY = maxValue == 0 ? 100.0 : maxValue * 1.25;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             height: 190,
             child: BarChart(
               BarChartData(
-                maxY: maxValue == 0 ? 100 : maxValue * 1.2,
+                maxY: chartMaxY,
                 minY: 0,
+                alignment: BarChartAlignment.spaceAround,
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final label = group.x == 0 ? 'Pemasukan' : 'Pengeluaran';
+
+                      return BarTooltipItem(
+                        '$label\n${CurrencyFormatter.format(rod.toY)}',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          height: 1.6,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
-                gridData: const FlGridData(show: true, drawVerticalLine: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: chartMaxY / 4,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.grey.shade200,
+                      strokeWidth: 1,
+                      dashArray: [4, 4],
+                    );
+                  },
+                ),
                 titlesData: FlTitlesData(
                   topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -392,12 +437,34 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 65,
+                      interval: chartMaxY / 4,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            CurrencyFormatter.format(value),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.grey.shade500,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 34,
                       getTitlesWidget: (value, meta) {
                         final label = value.toInt() == 0
                             ? 'Pemasukan'
@@ -406,10 +473,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                             : '';
 
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: 10),
                           child: Text(
                             label,
-                            style: const TextStyle(fontSize: 11),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade700,
+                            ),
                           ),
                         );
                       },
@@ -423,12 +494,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          const Row(
+
+          const SizedBox(height: 16),
+
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _LegendDot(color: Colors.green, label: 'Pemasukan'),
-              SizedBox(width: 20),
+              const SizedBox(width: 24),
               _LegendDot(color: Colors.red, label: 'Pengeluaran'),
             ],
           ),
