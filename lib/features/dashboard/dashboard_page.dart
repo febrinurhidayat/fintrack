@@ -10,7 +10,7 @@ import '../transactions/pages/transactions_page.dart';
 import '../transactions/providers/transaction_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
-import '../accounts/providers/profile_provider.dart';
+import '../profile/providers/profile_provider.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});

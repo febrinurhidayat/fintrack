@@ -4,7 +4,7 @@ import '../../reports/pages/reports_page.dart';
 import '../../dashboard/dashboard_page.dart';
 import '../../accounts/pages/accounts_page.dart';
 import '../../transactions/pages/transactions_page.dart';
-import '../../accounts/pages/profile_page.dart';
+import '../../profile/pages/profile_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
