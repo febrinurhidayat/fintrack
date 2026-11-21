@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../../transactions/providers/transaction_provider.dart';
+
 // Pastikan provider kategori (incomeCategoriesProvider & expenseCategoriesProvider) ter-import di sini
 
 class ReportsPage extends ConsumerStatefulWidget {
@@ -38,9 +39,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final reportAsync = ref.watch(
-      reportTransactionsProvider(_selectedMonth),
-    );
+    final reportAsync = ref.watch(reportTransactionsProvider(_selectedMonth));
 
     final incomeCategoriesAsync = ref.watch(incomeCategoriesProvider);
     final expenseCategoriesAsync = ref.watch(expenseCategoriesProvider);
@@ -60,20 +59,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         ),
       ),
       body: reportAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 44,
-                ),
+                const Icon(Icons.error_outline, color: Colors.red, size: 44),
                 const SizedBox(height: 12),
                 const Text('Gagal memuat laporan'),
                 const SizedBox(height: 8),
@@ -84,9 +77,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    ref.invalidate(
-                      reportTransactionsProvider(_selectedMonth),
-                    );
+                    ref.invalidate(reportTransactionsProvider(_selectedMonth));
                   },
                   child: const Text('Coba lagi'),
                 ),
@@ -105,11 +96,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     List<TransactionModel> transactions,
     Map<String, String> categoryNames,
   ) {
-    final incomeTransactions =
-        transactions.where((item) => item.isIncome).toList();
+    final incomeTransactions = transactions
+        .where((item) => item.isIncome)
+        .toList();
 
-    final expenseTransactions =
-        transactions.where((item) => item.isExpense).toList();
+    final expenseTransactions = transactions
+        .where((item) => item.isExpense)
+        .toList();
 
     final totalIncome = incomeTransactions.fold<double>(
       0,
@@ -145,13 +138,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(
-          reportTransactionsProvider(_selectedMonth),
-        );
+        ref.invalidate(reportTransactionsProvider(_selectedMonth));
 
-        await ref.read(
-          reportTransactionsProvider(_selectedMonth).future,
-        );
+        await ref.read(reportTransactionsProvider(_selectedMonth).future);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -233,7 +222,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             if (transactions.isEmpty)
               _emptyMessage('Belum ada transaksi pada bulan ini.')
             else
-              ...transactions.map(_buildTransactionTile),
+              ...transactions.map(
+                (transaction) =>
+                    _buildTransactionTile(transaction, categoryNames),
+              ),
 
             const SizedBox(height: 24),
           ],
@@ -247,10 +239,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       onTap: _selectMonth,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 13,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -258,10 +247,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_month_rounded,
-              color: AppTheme.primary,
-            ),
+            const Icon(Icons.calendar_month_rounded, color: AppTheme.primary),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -308,10 +294,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             isPositive
                 ? 'Pemasukan lebih besar dari pengeluaran'
                 : 'Pengeluaran lebih besar dari pemasukan',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
       ),
@@ -337,33 +320,22 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 6),
           Text(
             CurrencyFormatter.format(amount),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildComparisonChart(
-    double income,
-    double expense,
-  ) {
-    final maxValue = [income, expense].reduce(
-      (a, b) => a > b ? a : b,
-    );
+  Widget _buildComparisonChart(double income, double expense) {
+    final maxValue = [income, expense].reduce((a, b) => a > b ? a : b);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -380,10 +352,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 maxY: maxValue == 0 ? 100 : maxValue * 1.2,
                 minY: 0,
                 borderData: FlBorderData(show: false),
-                gridData: const FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                ),
+                gridData: const FlGridData(show: true, drawVerticalLine: false),
                 titlesData: FlTitlesData(
                   topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -401,8 +370,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                         final label = value.toInt() == 0
                             ? 'Pemasukan'
                             : value.toInt() == 1
-                                ? 'Pengeluaran'
-                                : '';
+                            ? 'Pengeluaran'
+                            : '';
 
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
@@ -436,11 +405,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 
-  BarChartGroupData _barGroup(
-    int x,
-    double value,
-    Color color,
-  ) {
+  BarChartGroupData _barGroup(int x, double value, Color color) {
     return BarChartGroupData(
       x: x,
       barRods: [
@@ -448,9 +413,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           toY: value,
           color: color,
           width: 38,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(6),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
         ),
       ],
     );
@@ -471,8 +434,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       ),
       child: Column(
         children: categories.map((entry) {
-          final percentage =
-              totalAmount > 0 ? entry.value / totalAmount : 0.0;
+          final percentage = totalAmount > 0 ? entry.value / totalAmount : 0.0;
 
           final categoryName = entry.key == 'uncategorized'
               ? 'Tanpa Kategori'
@@ -529,74 +491,89 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 
-  Widget _buildTransactionTile(TransactionModel transaction) {
-    final isIncome = transaction.isIncome;
-    final color = isIncome ? Colors.green : Colors.red;
+Widget _buildTransactionTile(
+  TransactionModel transaction,
+  Map<String, String> categoryNames,
+) {
+  final isIncome = transaction.isIncome;
+  final color = isIncome ? Colors.green : Colors.red;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 9),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isIncome
-                ? Icons.trending_up_rounded
-                : Icons.trending_down_rounded,
+  final categoryName = transaction.categoryId == null
+      ? 'Tanpa Kategori'
+      : categoryNames[transaction.categoryId] ??
+          'Kategori tidak ditemukan';
+
+  return Container(
+    margin: const EdgeInsets.only(bottom: 9),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      children: [
+        Icon(
+          isIncome
+              ? Icons.trending_up_rounded
+              : Icons.trending_down_rounded,
+          color: color,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                transaction.description?.trim().isNotEmpty == true
+                    ? transaction.description!.trim()
+                    : isIncome
+                        ? 'Pemasukan'
+                        : 'Pengeluaran',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                categoryName,
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('dd MMM yyyy', 'id_ID')
+                    .format(transaction.transactionDate),
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${isIncome ? '+' : '-'}'
+          '${CurrencyFormatter.format(transaction.amount)}',
+          style: TextStyle(
             color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.description?.trim().isNotEmpty == true
-                      ? transaction.description!.trim()
-                      : isIncome
-                          ? 'Pemasukan'
-                          : 'Pengeluaran',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('dd MMM yyyy', 'id_ID')
-                      .format(transaction.transactionDate),
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${isIncome ? '+' : '-'}'
-            '${CurrencyFormatter.format(transaction.amount)}',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 17,
-        fontWeight: FontWeight.bold,
-      ),
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
     );
   }
 
@@ -611,10 +588,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppTheme.textSecondary,
-          fontSize: 13,
-        ),
+        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
       ),
     );
   }
@@ -624,10 +598,7 @@ class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _LegendDot({
-    required this.color,
-    required this.label,
-  });
+  const _LegendDot({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -636,16 +607,10 @@ class _LegendDot extends StatelessWidget {
         Container(
           width: 9,
           height: 9,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11),
-        ),
+        Text(label, style: const TextStyle(fontSize: 11)),
       ],
     );
   }
