@@ -5,10 +5,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../statement/pages/statement_page.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../../transactions/providers/transaction_provider.dart';
-
-// Pastikan provider kategori (incomeCategoriesProvider & expenseCategoriesProvider) ter-import di sini
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -148,7 +147,40 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildMonthSelector(),
+            Row(
+              children: [
+                Expanded(child: _buildMonthSelector()),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const StatementPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                  label: const Text(
+                    'E-Statement',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 14,
+                    ),
+                    side: BorderSide(
+                      color: AppTheme.primary.withValues(alpha: 0.35),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
 
             _buildBalanceCard(difference),
@@ -491,84 +523,83 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 
-Widget _buildTransactionTile(
-  TransactionModel transaction,
-  Map<String, String> categoryNames,
-) {
-  final isIncome = transaction.isIncome;
-  final color = isIncome ? Colors.green : Colors.red;
+  Widget _buildTransactionTile(
+    TransactionModel transaction,
+    Map<String, String> categoryNames,
+  ) {
+    final isIncome = transaction.isIncome;
+    final color = isIncome ? Colors.green : Colors.red;
 
-  final categoryName = transaction.categoryId == null
-      ? 'Tanpa Kategori'
-      : categoryNames[transaction.categoryId] ??
-          'Kategori tidak ditemukan';
+    final categoryName = transaction.categoryId == null
+        ? 'Tanpa Kategori'
+        : categoryNames[transaction.categoryId] ?? 'Kategori tidak ditemukan';
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 9),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: Row(
-      children: [
-        Icon(
-          isIncome
-              ? Icons.trending_up_rounded
-              : Icons.trending_down_rounded,
-          color: color,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                transaction.description?.trim().isNotEmpty == true
-                    ? transaction.description!.trim()
-                    : isIncome
-                        ? 'Pemasukan'
-                        : 'Pengeluaran',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                categoryName,
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('dd MMM yyyy', 'id_ID')
-                    .format(transaction.transactionDate),
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '${isIncome ? '+' : '-'}'
-          '${CurrencyFormatter.format(transaction.amount)}',
-          style: TextStyle(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isIncome ? Icons.trending_up_rounded : Icons.trending_down_rounded,
             color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
           ),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.description?.trim().isNotEmpty == true
+                      ? transaction.description!.trim()
+                      : isIncome
+                      ? 'Pemasukan'
+                      : 'Pengeluaran',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  categoryName,
+                  style: const TextStyle(
+                    color: AppTheme.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat(
+                    'dd MMM yyyy',
+                    'id_ID',
+                  ).format(transaction.transactionDate),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${isIncome ? '+' : '-'}'
+            '${CurrencyFormatter.format(transaction.amount)}',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _sectionTitle(String title) {
     return Text(

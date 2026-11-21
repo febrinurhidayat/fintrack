@@ -26,7 +26,6 @@ class TransactionRepository {
         '${date.day.toString().padLeft(2, '0')}';
   }
 
-  // Mengambil kategori pengguna.
   Future<List<CategoryModel>> getCategories({
     required String type,
   }) async {
@@ -46,7 +45,6 @@ class TransactionRepository {
         .toList();
   }
 
-  // Mengambil daftar transaksi terbaru.
   Future<List<TransactionModel>> getTransactions({
     int limit = 100,
   }) async {
@@ -67,27 +65,83 @@ class TransactionRepository {
         .toList();
   }
 
-  // Mengambil seluruh transaksi aktif berdasarkan periode laporan.
-  // Menggunakan pagination agar tidak terbatasi 100 atau 1000 data.
   Future<List<TransactionModel>> getTransactionsByPeriod({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     final start = _formatDate(startDate);
-    final end = _formatDate(endDate);
+    final endExclusive = _formatDate(
+      DateTime(endDate.year, endDate.month, endDate.day + 1),
+    );
 
+    return _fetchAccountTransactions(
+      startDate: start,
+      endDate: endExclusive,
+    );
+  }
+
+  // Mengambil transaksi aktif sebelum tanggal mulai laporan.
+  Future<List<TransactionModel>> getAccountTransactionsBefore({
+    required String accountId,
+    required DateTime beforeDate,
+  }) async {
+    return _fetchAccountTransactions(
+      accountId: accountId,
+      beforeDate: _formatDate(beforeDate),
+    );
+  }
+
+  // Mengambil transaksi aktif selama periode laporan.
+  Future<List<TransactionModel>> getAccountTransactionsByPeriod({
+    required String accountId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final start = _formatDate(startDate);
+
+    final endExclusive = _formatDate(
+      DateTime(endDate.year, endDate.month, endDate.day + 1),
+    );
+
+    return _fetchAccountTransactions(
+      accountId: accountId,
+      startDate: start,
+      endDate: endExclusive,
+    );
+  }
+
+  Future<List<TransactionModel>> _fetchAccountTransactions({
+    String? accountId,
+    String? beforeDate,
+    String? startDate,
+    String? endDate,
+  }) async {
     final List<TransactionModel> transactions = [];
 
     var offset = 0;
 
     while (true) {
-      final response = await _client
+      var query = _client
           .from('transactions')
           .select()
           .eq('user_id', _userId)
-          .eq('status', 'active')
-          .gte('transaction_date', start)
-          .lt('transaction_date', end)
+          .eq('status', 'active');
+
+      if (accountId != null) {
+        query = query.eq('account_id', accountId);
+      }
+
+      if (beforeDate != null) {
+        query = query.lt('transaction_date', beforeDate);
+      }
+
+      if (startDate != null) {
+        query = query
+            .gte('transaction_date', startDate)
+            .lt('transaction_date', endDate!);
+      }
+
+      final response = await query
           .order('transaction_date', ascending: false)
           .order('created_at', ascending: false)
           .range(offset, offset + _pageSize - 1);
@@ -102,9 +156,7 @@ class TransactionRepository {
         ),
       );
 
-      if (rows.length < _pageSize) {
-        break;
-      }
+      if (rows.length < _pageSize) break;
 
       offset += _pageSize;
     }
@@ -112,7 +164,6 @@ class TransactionRepository {
     return transactions;
   }
 
-  // Menambahkan transaksi.
   Future<void> createTransaction({
     required String accountId,
     required String type,
@@ -134,7 +185,6 @@ class TransactionRepository {
     });
   }
 
-  // Mengubah transaksi.
   Future<void> updateTransaction({
     required String id,
     required String accountId,
@@ -161,7 +211,6 @@ class TransactionRepository {
         .eq('status', 'active');
   }
 
-  // Membatalkan transaksi.
   Future<void> cancelTransaction({
     required String id,
     required String reason,
