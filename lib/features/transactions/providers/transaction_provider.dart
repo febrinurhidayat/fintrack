@@ -10,7 +10,7 @@ final transactionRepositoryProvider =
   return TransactionRepository();
 });
 
-// Daftar transaksi.
+// Daftar transaksi terbaru.
 final transactionsProvider =
     FutureProvider<List<TransactionModel>>((ref) {
   return ref.watch(transactionRepositoryProvider).getTransactions();
@@ -31,3 +31,28 @@ final expenseCategoriesProvider =
       .watch(transactionRepositoryProvider)
       .getCategories(type: 'expense');
 });
+
+// Transaksi aktif berdasarkan bulan laporan.
+final reportTransactionsProvider =
+    FutureProvider.family<List<TransactionModel>, DateTime>(
+  (ref, selectedMonth) {
+    final startDate = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      1,
+    );
+
+    final endDate = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      1,
+    );
+
+    return ref
+        .watch(transactionRepositoryProvider)
+        .getTransactionsByPeriod(
+          startDate: startDate,
+          endDate: endDate,
+        );
+  },
+);

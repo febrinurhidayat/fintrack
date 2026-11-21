@@ -1,3 +1,4 @@
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -6,6 +7,8 @@ import '../models/transaction_model.dart';
 
 class TransactionRepository {
   final SupabaseClient _client = SupabaseConfig.client;
+
+  static const int _pageSize = 1000;
 
   String get _userId {
     final user = _client.auth.currentUser;
@@ -17,8 +20,16 @@ class TransactionRepository {
     return user.id;
   }
 
-  // Mengambil seluruh kategori milik pengguna.
-  Future<List<CategoryModel>> getCategories({required String type}) async {
+  String _formatDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // Mengambil kategori pengguna.
+  Future<List<CategoryModel>> getCategories({
+    required String type,
+  }) async {
     final response = await _client
         .from('categories')
         .select()
@@ -27,12 +38,18 @@ class TransactionRepository {
         .order('name', ascending: true);
 
     return (response as List)
-        .map((item) => CategoryModel.fromMap(Map<String, dynamic>.from(item)))
+        .map(
+          (item) => CategoryModel.fromMap(
+            Map<String, dynamic>.from(item),
+          ),
+        )
         .toList();
   }
 
-  // Mengambil daftar transaksi.
-  Future<List<TransactionModel>> getTransactions({int limit = 100}) async {
+  // Mengambil daftar transaksi terbaru.
+  Future<List<TransactionModel>> getTransactions({
+    int limit = 100,
+  }) async {
     final response = await _client
         .from('transactions')
         .select()
@@ -43,9 +60,56 @@ class TransactionRepository {
 
     return (response as List)
         .map(
-          (item) => TransactionModel.fromMap(Map<String, dynamic>.from(item)),
+          (item) => TransactionModel.fromMap(
+            Map<String, dynamic>.from(item),
+          ),
         )
         .toList();
+  }
+
+  // Mengambil seluruh transaksi aktif berdasarkan periode laporan.
+  // Menggunakan pagination agar tidak terbatasi 100 atau 1000 data.
+  Future<List<TransactionModel>> getTransactionsByPeriod({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final start = _formatDate(startDate);
+    final end = _formatDate(endDate);
+
+    final List<TransactionModel> transactions = [];
+
+    var offset = 0;
+
+    while (true) {
+      final response = await _client
+          .from('transactions')
+          .select()
+          .eq('user_id', _userId)
+          .eq('status', 'active')
+          .gte('transaction_date', start)
+          .lt('transaction_date', end)
+          .order('transaction_date', ascending: false)
+          .order('created_at', ascending: false)
+          .range(offset, offset + _pageSize - 1);
+
+      final rows = response as List;
+
+      transactions.addAll(
+        rows.map(
+          (item) => TransactionModel.fromMap(
+            Map<String, dynamic>.from(item),
+          ),
+        ),
+      );
+
+      if (rows.length < _pageSize) {
+        break;
+      }
+
+      offset += _pageSize;
+    }
+
+    return transactions;
   }
 
   // Menambahkan transaksi.
@@ -66,10 +130,7 @@ class TransactionRepository {
       'description': description?.trim().isEmpty == true
           ? null
           : description?.trim(),
-      'transaction_date':
-          '${transactionDate.year.toString().padLeft(4, '0')}-'
-          '${transactionDate.month.toString().padLeft(2, '0')}-'
-          '${transactionDate.day.toString().padLeft(2, '0')}',
+      'transaction_date': _formatDate(transactionDate),
     });
   }
 
@@ -93,23 +154,24 @@ class TransactionRepository {
           'description': description?.trim().isEmpty == true
               ? null
               : description?.trim(),
-          'transaction_date':
-              '${transactionDate.year.toString().padLeft(4, '0')}-'
-              '${transactionDate.month.toString().padLeft(2, '0')}-'
-              '${transactionDate.day.toString().padLeft(2, '0')}',
+          'transaction_date': _formatDate(transactionDate),
         })
         .eq('id', id)
-        .eq('user_id', _userId);
+        .eq('user_id', _userId)
+        .eq('status', 'active');
   }
 
-  //cancel transaksi
+  // Membatalkan transaksi.
   Future<void> cancelTransaction({
     required String id,
     required String reason,
   }) async {
     await _client.rpc(
       'cancel_transaction',
-      params: {'p_transaction_id': id, 'p_reason': reason.trim()},
+      params: {
+        'p_transaction_id': id,
+        'p_reason': reason.trim(),
+      },
     );
   }
 }
