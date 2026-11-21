@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../accounts/providers/account_provider.dart';
 import '../providers/statement_provider.dart';
+import '../services/statement_pdf_service.dart';
 
 class StatementSection extends ConsumerStatefulWidget {
   const StatementSection({super.key});
@@ -16,6 +17,7 @@ class StatementSection extends ConsumerStatefulWidget {
 
 class _StatementSectionState extends ConsumerState<StatementSection> {
   String? _selectedAccountId;
+  bool _isExporting = false;
 
   DateTime _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
 
@@ -51,6 +53,29 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
 
     if (selected != null) {
       setState(() => _endDate = selected);
+    }
+  }
+
+  Future<void> _exportPdf(AccountStatement statement) async {
+    if (_isExporting) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      await StatementPdfService.export(statement);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuat PDF: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
     }
   }
 
@@ -101,7 +126,16 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFilterCard(accounts, selectedId),
+                _buildFilterCard(
+                  accounts,
+                  selectedId,
+                  onExport: statementAsync.when(
+                    data: (statement) =>
+                        () => _exportPdf(statement),
+                    loading: () => null,
+                    error: (error, stackTrace) => null,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 statementAsync.when(
                   loading: () => const Center(
@@ -126,7 +160,11 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
     );
   }
 
-  Widget _buildFilterCard(List<dynamic> accounts, String selectedId) {
+  Widget _buildFilterCard(
+    List<dynamic> accounts,
+    String selectedId, {
+    VoidCallback? onExport,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -136,39 +174,79 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
           const Text(
             'Pilih Rekening',
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: selectedId,
-            isExpanded: true,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-            ),
-            items: accounts.map((account) {
-              return DropdownMenuItem<String>(
-                value: account.id as String,
-                child: Text(
-                  account.name as String,
-                  overflow: TextOverflow.ellipsis,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: selectedId,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                  ),
+                  items: accounts.map((account) {
+                    return DropdownMenuItem<String>(
+                      value: account.id as String,
+                      child: Text(
+                        account.name as String,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedAccountId = value);
+                    }
+                  },
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedAccountId = value);
-              }
-            },
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isExporting ? null : onExport,
+                  icon: _isExporting
+                      ? const SizedBox(
+                          width: 15,
+                          height: 15,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                  label: Text(
+                    _isExporting ? 'Memproses...' : 'Ekspor PDF',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 18),
           const Text(
@@ -352,6 +430,7 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
             ),
           ],
         ),
+
         const SizedBox(height: 24),
         Row(
           children: [
