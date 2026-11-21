@@ -1,5 +1,6 @@
+import 'package:fintrack/core/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -55,14 +56,6 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     _amountController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-
-  String _formatCurrency(double amount) {
-    return NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    ).format(amount);
   }
 
   Future<void> _selectDate() async {
@@ -359,7 +352,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 TextFormField(
                   controller: _amountController,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [CurrencyFormatter.inputFormatter()],
                   decoration: const InputDecoration(
                     prefixText: 'Rp ',
                     hintText: '0',
@@ -397,7 +390,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     return DropdownMenuItem(
                       value: account.id,
                       child: Text(
-                        '${account.name} ${account.bankName ?? ""} ${_formatCurrency(account.currentBalance)}',
+                        '${account.name} ${account.bankName ?? ""} ${CurrencyFormatter.format(account.currentBalance)}',
                         overflow: TextOverflow.ellipsis,
                       ),
                     );

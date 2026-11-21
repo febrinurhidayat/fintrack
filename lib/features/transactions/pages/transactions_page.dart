@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../transfers/pages/transfers_page.dart';
 import '../../accounts/models/account_model.dart';
 import '../../accounts/providers/account_provider.dart';
 import '../models/category_model.dart';
@@ -11,6 +12,13 @@ import 'transaction_form_page.dart';
 
 class TransactionsPage extends ConsumerWidget {
   const TransactionsPage({super.key});
+
+  void _openTransfersPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TransfersPage()),
+    );
+  }
 
   String _formatCurrency(double amount) {
     return NumberFormat.currency(
@@ -113,6 +121,11 @@ class TransactionsPage extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Riwayat Transfer',
+            onPressed: () => _openTransfersPage(context),
+            icon: const Icon(Icons.swap_horiz_rounded),
+          ),
           IconButton(
             tooltip: 'Muat ulang',
             onPressed: () {
