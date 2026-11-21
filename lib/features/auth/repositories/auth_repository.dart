@@ -1,4 +1,3 @@
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -16,9 +15,7 @@ class AuthRepository {
     await _client.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {
-        'full_name': fullName.trim(),
-      },
+      data: {'full_name': fullName.trim()},
     );
   }
 
@@ -35,13 +32,8 @@ class AuthRepository {
   }
 
   // KIRIM ULANG OTP REGISTER
-  Future<void> resendSignupOtp({
-    required String email,
-  }) async {
-    await _client.auth.resend(
-      type: OtpType.signup,
-      email: email.trim(),
-    );
+  Future<void> resendSignupOtp({required String email}) async {
+    await _client.auth.resend(type: OtpType.signup, email: email.trim());
   }
 
   // LOGIN
@@ -56,12 +48,8 @@ class AuthRepository {
   }
 
   // MEMINTA OTP RESET PASSWORD
-  Future<void> sendPasswordResetOtp({
-    required String email,
-  }) async {
-    await _client.auth.resetPasswordForEmail(
-      email.trim(),
-    );
+  Future<void> sendPasswordResetOtp({required String email}) async {
+    await _client.auth.resetPasswordForEmail(email.trim());
   }
 
   // VERIFIKASI OTP RESET PASSWORD
@@ -77,12 +65,59 @@ class AuthRepository {
   }
 
   // UPDATE PASSWORD SETELAH OTP VALID
-  Future<UserResponse> updatePassword({
+  Future<UserResponse> updatePassword({required String newPassword}) async {
+    return await _client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  // MENGUBAH PASSWORD DARI HALAMAN AKUN
+  Future<void> changePassword({
+    required String currentPassword,
     required String newPassword,
   }) async {
-    return await _client.auth.updateUser(
-      UserAttributes(password: newPassword),
+    final user = _client.auth.currentUser;
+    final email = user?.email;
+
+    if (user == null || email == null) {
+      throw Exception('Sesi pengguna tidak ditemukan.');
+    }
+
+    if (currentPassword.isEmpty || newPassword.isEmpty) {
+      throw Exception('Password tidak boleh kosong.');
+    }
+
+    if (newPassword.length < 6) {
+      throw Exception('Password baru minimal 6 karakter.');
+    }
+
+    // Verifikasi password lama.
+    await _client.auth.signInWithPassword(
+      email: email,
+      password: currentPassword,
     );
+
+    // Simpan password baru setelah verifikasi berhasil.
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  // MEMINTA PERUBAHAN EMAIL
+  Future<void> changeEmail({required String newEmail}) async {
+    final user = _client.auth.currentUser;
+
+    if (user == null) {
+      throw Exception('Sesi pengguna tidak ditemukan.');
+    }
+
+    final email = newEmail.trim().toLowerCase();
+
+    if (email.isEmpty) {
+      throw Exception('Email baru tidak boleh kosong.');
+    }
+
+    if (email == user.email?.toLowerCase()) {
+      throw Exception('Email baru sama dengan email saat ini.');
+    }
+
+    await _client.auth.updateUser(UserAttributes(email: email));
   }
 
   // LOGOUT
@@ -94,6 +129,5 @@ class AuthRepository {
   User? get currentUser => _client.auth.currentUser;
 
   // AUTH SESSION STREAM
-  Stream<AuthState> get authStateChanges =>
-      _client.auth.onAuthStateChange;
+  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 }

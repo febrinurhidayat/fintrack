@@ -4,6 +4,7 @@ import '../../reports/pages/reports_page.dart';
 import '../../dashboard/dashboard_page.dart';
 import '../../accounts/pages/accounts_page.dart';
 import '../../transactions/pages/transactions_page.dart';
+import '../../accounts/pages/profile_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -15,11 +16,12 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
+  late final List<Widget> _pages = [
     const DashboardPage(),
     const AccountsPage(),
     const TransactionsPage(),
     const ReportsPage(),
+    const AccountPage(),
   ];
 
   @override
@@ -58,8 +60,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             label: 'Laporan',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_2_outlined),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'Akun',
           ),
         ],

@@ -275,7 +275,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                           },
                           showCheckmark: false,
                           avatar: Icon(
-                            Icons.arrow_upward_rounded,
+                            Icons.trending_down_rounded,
                             size: 18,
                             color: _type == 'expense'
                                 ? Colors.white
@@ -312,7 +312,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                           },
                           showCheckmark: false,
                           avatar: Icon(
-                            Icons.arrow_downward_rounded,
+                            Icons.trending_up_rounded,
                             size: 18,
                             color: _type == 'income'
                                 ? Colors.white

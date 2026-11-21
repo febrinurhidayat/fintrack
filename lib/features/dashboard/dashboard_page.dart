@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../auth/providers/auth_provider.dart';
 import '../accounts/pages/accounts_page.dart';
 import '../accounts/providers/account_provider.dart';
 import '../transactions/models/transaction_model.dart';
 import '../transactions/pages/transaction_form_page.dart';
 import '../transactions/pages/transactions_page.dart';
 import '../transactions/providers/transaction_provider.dart';
-import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../accounts/providers/profile_provider.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -63,6 +62,17 @@ class DashboardPage extends ConsumerWidget {
     final accountsAsync = ref.watch(activeAccountsProvider);
     final transactionsAsync = ref.watch(transactionsProvider);
 
+    final profileAsync = ref.watch(profileProvider);
+
+    final profile = profileAsync.when(
+      data: (data) => data,
+      loading: () => null,
+      error: (_, _) => null,
+    );
+
+    final avatarUrl = profile?['avatar_url'] as String?;
+    final fullName = profile?['full_name'] as String? ?? '';
+
     final transactions =
         transactionsAsync.asData?.value ?? <TransactionModel>[];
 
@@ -84,40 +94,49 @@ class DashboardPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              AppConfig.appName,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 21),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+              backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: avatarUrl == null || avatarUrl.isEmpty
+                  ? const Icon(
+                      Icons.person_rounded,
+                      color: AppTheme.primary,
+                      size: 25,
+                    )
+                  : null,
             ),
-            Text(
-              'Personal Finance',
-              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    fullName.isNotEmpty ? fullName : 'Pengguna',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Text(
+                    'Personal Finance',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Logout',
-            onPressed: () async {
-              try {
-                await ref.read(authRepositoryProvider).signOut();
-              } catch (error) {
-                if (!context.mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Logout gagal: $error'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.logout_rounded),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         child: RefreshIndicator(
