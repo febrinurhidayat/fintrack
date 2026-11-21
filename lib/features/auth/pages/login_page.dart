@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../repositories/auth_repository.dart';
@@ -40,13 +39,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loading = true);
 
     try {
-      await _repository.signIn(
-        email: email,
-        password: password,
-      );
+      await _repository.signIn(email: email, password: password);
 
-      // AuthGate akan mendeteksi perubahan session
-      // dan menampilkan Dashboard.
     } catch (e) {
       if (!mounted) return;
       _showMessage('Login gagal: $e');
@@ -56,9 +50,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -80,10 +73,7 @@ class _LoginPageState extends State<LoginPage> {
                 const Text(
                   'FinTrack',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -136,7 +126,6 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text('Lupa password?'),
                   ),
                 ),
-                const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _loading ? null : _login,
                   child: _loading
@@ -144,16 +133,14 @@ class _LoginPageState extends State<LoginPage> {
                       : const Text('Login'),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton(
+                TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const RegisterPage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RegisterPage()),
                     );
                   },
-                  child: const Text('Buat Akun Baru'),
+                  child: const Text('Belum punya akun? Daftar'),
                 ),
               ],
             ),
