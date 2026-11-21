@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
-import '../../dashboard/dashboard_page.dart';
+import '../../navigation/pages/main_navigation_page.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -16,7 +16,7 @@ class AuthGate extends ConsumerWidget {
     return authState.when(
       data: (state) {
         if (state.session != null) {
-          return const DashboardPage();
+          return const MainNavigationPage();
         }
 
         return const LoginPage();
