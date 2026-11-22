@@ -120,6 +120,28 @@ class AuthRepository {
     await _client.auth.updateUser(UserAttributes(email: email));
   }
 
+  // MENGHAPUS AKUN SECARA PERMANEN
+  Future<void> deleteAccount({required String password}) async {
+    final user = _client.auth.currentUser;
+
+    if (user == null || user.email == null) {
+      throw Exception('Sesi pengguna tidak ditemukan.');
+    }
+
+    if (password.isEmpty) {
+      throw Exception('Password wajib diisi.');
+    }
+
+    // Password diverifikasi dan akun dihapus oleh Edge Function.
+    await _client.functions.invoke(
+      'delete-account',
+      body: {'password': password},
+    );
+
+    // Hapus sesi lokal setelah penghapusan berhasil.
+    await _client.auth.signOut(scope: SignOutScope.local);
+  }
+
   // LOGOUT
   Future<void> signOut() async {
     await _client.auth.signOut();

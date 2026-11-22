@@ -17,6 +17,7 @@ class AccountPage extends ConsumerStatefulWidget {
 
 class _AccountPageState extends ConsumerState<AccountPage> {
   bool _uploadingPhoto = false;
+  bool _deletingAccount = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -297,6 +298,125 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     currentController.dispose();
     newController.dispose();
     confirmController.dispose();
+  }
+
+  Future<void> _deleteAccount() async {
+    final passwordController = TextEditingController();
+    bool obscurePassword = true;
+
+    final password = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              icon: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red,
+                size: 42,
+              ),
+              title: const Text(
+                'Hapus Akun Permanen?',
+                textAlign: TextAlign.center,
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Apakah Anda yakin ingin menghapus akun FinTrack?',
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Akun dan data keuangan yang terhubung dapat dihapus '
+                      'secara permanen dan tidak dapat dipulihkan.',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Masukkan password untuk mengonfirmasi:',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: passwordController,
+                      autofocus: true,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Password akun',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setDialogState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () {
+                    if (passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Masukkan password terlebih dahulu.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(dialogContext, passwordController.text);
+                  },
+                  child: const Text('Hapus Akun'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    passwordController.dispose();
+
+    if (password == null || !mounted) return;
+
+    setState(() => _deletingAccount = true);
+
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount(password: password);
+
+      // AuthGate akan mengarahkan pengguna ke halaman Login
+      // setelah sesi lokal berhasil dihapus.
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage('Gagal menghapus akun: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _deletingAccount = false);
+      }
+    }
   }
 
   Future<void> _logout() async {
@@ -590,6 +710,64 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                     value: createdAt,
                   ),
                 ),
+                const SizedBox(height: 24),
+const Padding(
+  padding: EdgeInsets.only(left: 4, bottom: 10),
+  child: Text(
+    'Zona Berbahaya',
+    style: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+      color: Colors.red,
+    ),
+  ),
+),
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: ListTile(
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 6,
+    ),
+    leading: Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.delete_forever_outlined,
+        color: Colors.red,
+      ),
+    ),
+    title: const Text(
+      'Hapus Akun',
+      style: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    subtitle: const Text(
+      'Hapus akun dan data secara permanen',
+      style: TextStyle(fontSize: 12),
+    ),
+    trailing: _deletingAccount
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.red,
+          ),
+    onTap: _deletingAccount ? null : _deleteAccount,
+  ),
+),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
                   onPressed: _logout,
