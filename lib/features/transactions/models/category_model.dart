@@ -1,7 +1,7 @@
 
 class CategoryModel {
   final String id;
-  final String userId;
+  final String? userId;
   final String name;
   final String type;
   final String? icon;
@@ -9,7 +9,7 @@ class CategoryModel {
 
   const CategoryModel({
     required this.id,
-    required this.userId,
+    this.userId,
     required this.name,
     required this.type,
     this.icon,
@@ -19,7 +19,7 @@ class CategoryModel {
   factory CategoryModel.fromMap(Map<String, dynamic> map) {
     return CategoryModel(
       id: map['id'].toString(),
-      userId: map['user_id'].toString(),
+      userId: map['user_id'] as String?,
       name: map['name'] as String,
       type: map['type'] as String,
       icon: map['icon'] as String?,

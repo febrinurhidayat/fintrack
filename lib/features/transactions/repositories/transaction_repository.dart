@@ -1,4 +1,3 @@
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -26,28 +25,20 @@ class TransactionRepository {
         '${date.day.toString().padLeft(2, '0')}';
   }
 
-  Future<List<CategoryModel>> getCategories({
-    required String type,
-  }) async {
+  Future<List<CategoryModel>> getCategories({required String type}) async {
     final response = await _client
         .from('categories')
         .select()
-        .eq('user_id', _userId)
+        .or('user_id.is.null,user_id.eq.$_userId')
         .eq('type', type)
         .order('name', ascending: true);
 
     return (response as List)
-        .map(
-          (item) => CategoryModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
-        )
+        .map((item) => CategoryModel.fromMap(Map<String, dynamic>.from(item)))
         .toList();
   }
 
-  Future<List<TransactionModel>> getTransactions({
-    int limit = 100,
-  }) async {
+  Future<List<TransactionModel>> getTransactions({int limit = 100}) async {
     final response = await _client
         .from('transactions')
         .select()
@@ -58,9 +49,7 @@ class TransactionRepository {
 
     return (response as List)
         .map(
-          (item) => TransactionModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
+          (item) => TransactionModel.fromMap(Map<String, dynamic>.from(item)),
         )
         .toList();
   }
@@ -74,10 +63,7 @@ class TransactionRepository {
       DateTime(endDate.year, endDate.month, endDate.day + 1),
     );
 
-    return _fetchAccountTransactions(
-      startDate: start,
-      endDate: endExclusive,
-    );
+    return _fetchAccountTransactions(startDate: start, endDate: endExclusive);
   }
 
   // Mengambil transaksi aktif sebelum tanggal mulai laporan.
@@ -150,9 +136,7 @@ class TransactionRepository {
 
       transactions.addAll(
         rows.map(
-          (item) => TransactionModel.fromMap(
-            Map<String, dynamic>.from(item),
-          ),
+          (item) => TransactionModel.fromMap(Map<String, dynamic>.from(item)),
         ),
       );
 
@@ -217,10 +201,7 @@ class TransactionRepository {
   }) async {
     await _client.rpc(
       'cancel_transaction',
-      params: {
-        'p_transaction_id': id,
-        'p_reason': reason.trim(),
-      },
+      params: {'p_transaction_id': id, 'p_reason': reason.trim()},
     );
   }
 }
