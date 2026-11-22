@@ -711,63 +711,63 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-const Padding(
-  padding: EdgeInsets.only(left: 4, bottom: 10),
-  child: Text(
-    'Zona Berbahaya',
-    style: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      color: Colors.red,
-    ),
-  ),
-),
-Container(
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: ListTile(
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 6,
-    ),
-    leading: Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Icon(
-        Icons.delete_forever_outlined,
-        color: Colors.red,
-      ),
-    ),
-    title: const Text(
-      'Hapus Akun',
-      style: TextStyle(
-        color: Colors.red,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    subtitle: const Text(
-      'Hapus akun dan data secara permanen',
-      style: TextStyle(fontSize: 12),
-    ),
-    trailing: _deletingAccount
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : const Icon(
-            Icons.chevron_right_rounded,
-            color: Colors.red,
-          ),
-    onTap: _deletingAccount ? null : _deleteAccount,
-  ),
-),
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 10),
+                  child: Text(
+                    'Zona Berbahaya',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    leading: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.delete_forever_outlined,
+                        color: Colors.red,
+                      ),
+                    ),
+                    title: const Text(
+                      'Hapus Akun',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Hapus akun dan data secara permanen',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    trailing: _deletingAccount
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.red,
+                          ),
+                    onTap: _deletingAccount ? null : _deleteAccount,
+                  ),
+                ),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
                   onPressed: _logout,
