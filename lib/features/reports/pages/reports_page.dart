@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/providers/balance_visibility_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../statement/pages/statement_page.dart';
@@ -38,6 +39,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
+
     final reportAsync = ref.watch(reportTransactionsProvider(_selectedMonth));
 
     final incomeCategoriesAsync = ref.watch(incomeCategoriesProvider);
@@ -97,7 +100,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           ),
         ),
         data: (transactions) {
-          return _buildReport(transactions, categoryNames);
+          return _buildReport(transactions, categoryNames, isBalanceVisible);
         },
       ),
     );
@@ -106,6 +109,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildReport(
     List<TransactionModel> transactions,
     Map<String, String> categoryNames,
+    bool isBalanceVisible,
   ) {
     final incomeTransactions = transactions
         .where((item) => item.isIncome)
@@ -127,23 +131,29 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
     final difference = totalIncome - totalExpense;
 
-    // 1. Hitung total pemasukan per kategori
+    // Hitung total pemasukan per kategori.
     final incomeCategoryTotals = <String, double>{};
+
     for (final transaction in incomeTransactions) {
       final category = transaction.categoryId ?? 'uncategorized';
+
       incomeCategoryTotals[category] =
           (incomeCategoryTotals[category] ?? 0) + transaction.amount;
     }
+
     final sortedIncomeCategories = incomeCategoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    // Hitung total pengeluaran per kategori
+    // Hitung total pengeluaran per kategori.
     final expenseCategoryTotals = <String, double>{};
+
     for (final transaction in expenseTransactions) {
       final category = transaction.categoryId ?? 'uncategorized';
+
       expenseCategoryTotals[category] =
           (expenseCategoryTotals[category] ?? 0) + transaction.amount;
     }
+
     final sortedExpenseCategories = expenseCategoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
@@ -193,9 +203,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
 
-            _buildBalanceCard(difference),
+            _buildBalanceCard(difference, isBalanceVisible),
+
             const SizedBox(height: 16),
 
             Row(
@@ -206,6 +218,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     amount: totalIncome,
                     icon: Icons.trending_up_rounded,
                     color: Colors.green,
+                    isBalanceVisible: isBalanceVisible,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -215,6 +228,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     amount: totalExpense,
                     icon: Icons.trending_down_rounded,
                     color: Colors.red,
+                    isBalanceVisible: isBalanceVisible,
                   ),
                 ),
               ],
@@ -224,11 +238,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
             _sectionTitle('Perbandingan Keuangan'),
             const SizedBox(height: 14),
-            _buildComparisonChart(totalIncome, totalExpense),
+
+            _buildComparisonChart(totalIncome, totalExpense, isBalanceVisible),
 
             const SizedBox(height: 28),
 
-            // 2. Section Pemasukan per Kategori
+            // Section pemasukan per kategori.
             _sectionTitle('Pemasukan per Kategori'),
             const SizedBox(height: 14),
 
@@ -240,11 +255,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 totalIncome,
                 categoryNames,
                 Colors.green,
+                isBalanceVisible,
               ),
 
             const SizedBox(height: 28),
 
-            // Section Pengeluaran per Kategori
+            // Section pengeluaran per kategori.
             _sectionTitle('Pengeluaran per Kategori'),
             const SizedBox(height: 14),
 
@@ -256,6 +272,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 totalExpense,
                 categoryNames,
                 Colors.red,
+                isBalanceVisible,
               ),
 
             const SizedBox(height: 28),
@@ -267,8 +284,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               _emptyMessage('Belum ada transaksi pada bulan ini.')
             else
               ...transactions.map(
-                (transaction) =>
-                    _buildTransactionTile(transaction, categoryNames),
+                (transaction) => _buildTransactionTile(
+                  transaction,
+                  categoryNames,
+                  isBalanceVisible,
+                ),
               ),
 
             const SizedBox(height: 24),
@@ -306,8 +326,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 
-  Widget _buildBalanceCard(double difference) {
+  Widget _buildBalanceCard(double difference, bool isBalanceVisible) {
     final isPositive = difference >= 0;
+
+    final balanceText = isBalanceVisible
+        ? '${isPositive ? '+' : '-'}'
+              '${CurrencyFormatter.format(difference.abs())}'
+        : '${isPositive ? '+' : '-'}'
+              'Rp ******';
 
     return Container(
       width: double.infinity,
@@ -325,8 +351,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            '${isPositive ? '+' : '-'}'
-            '${CurrencyFormatter.format(difference.abs())}',
+            balanceText,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 25,
@@ -350,6 +375,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     required double amount,
     required IconData icon,
     required Color color,
+    required bool isBalanceVisible,
   }) {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -368,17 +394,25 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            CurrencyFormatter.format(amount),
+            isBalanceVisible ? CurrencyFormatter.format(amount) : 'Rp ***',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildComparisonChart(double income, double expense) {
+  Widget _buildComparisonChart(
+    double income,
+    double expense,
+    bool isBalanceVisible,
+  ) {
     final maxValue = income > expense ? income : expense;
     final chartMaxY = maxValue == 0 ? 100.0 : maxValue * 1.25;
 
@@ -389,124 +423,148 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade100),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 190,
-            child: BarChart(
-              BarChartData(
-                maxY: chartMaxY,
-                minY: 0,
-                alignment: BarChartAlignment.spaceAround,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final label = group.x == 0 ? 'Pemasukan' : 'Pengeluaran';
+      child: isBalanceVisible
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 190,
+                  child: BarChart(
+                    BarChartData(
+                      maxY: chartMaxY,
+                      minY: 0,
+                      alignment: BarChartAlignment.spaceAround,
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final label = group.x == 0
+                                ? 'Pemasukan'
+                                : 'Pengeluaran';
 
-                      return BarTooltipItem(
-                        '$label\n${CurrencyFormatter.format(rod.toY)}',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          height: 1.6,
+                            return BarTooltipItem(
+                              '$label\n${CurrencyFormatter.format(rod.toY)}',
+                              const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                height: 1.6,
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: chartMaxY / 4,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.shade200,
-                      strokeWidth: 1,
-                      dashArray: [4, 4],
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 65,
-                      interval: chartMaxY / 4,
-                      getTitlesWidget: (value, meta) {
-                        if (value == 0) {
-                          return const SizedBox.shrink();
-                        }
+                      ),
+                      borderData: FlBorderData(show: false),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: chartMaxY / 4,
+                        getDrawingHorizontalLine: (value) {
+                          return FlLine(
+                            color: Colors.grey.shade200,
+                            strokeWidth: 1,
+                            dashArray: [4, 4],
+                          );
+                        },
+                      ),
+                      titlesData: FlTitlesData(
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 65,
+                            interval: chartMaxY / 4,
+                            getTitlesWidget: (value, meta) {
+                              if (value == 0) {
+                                return const SizedBox.shrink();
+                              }
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Text(
-                            CurrencyFormatter.format(value),
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: Colors.grey.shade500,
-                            ),
-                            textAlign: TextAlign.right,
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Text(
+                                  CurrencyFormatter.format(value),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 34,
+                            getTitlesWidget: (value, meta) {
+                              final label = value.toInt() == 0
+                                  ? 'Pemasukan'
+                                  : value.toInt() == 1
+                                  ? 'Pengeluaran'
+                                  : '';
+
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      barGroups: [
+                        _barGroup(0, income, Colors.green),
+                        _barGroup(1, expense, Colors.red),
+                      ],
                     ),
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 34,
-                      getTitlesWidget: (value, meta) {
-                        final label = value.toInt() == 0
-                            ? 'Pemasukan'
-                            : value.toInt() == 1
-                            ? 'Pengeluaran'
-                            : '';
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                 ),
-                barGroups: [
-                  _barGroup(0, income, Colors.green),
-                  _barGroup(1, expense, Colors.red),
-                ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const _LegendDot(color: Colors.green, label: 'Pemasukan'),
+                    const SizedBox(width: 24),
+                    const _LegendDot(color: Colors.red, label: 'Pengeluaran'),
+                  ],
+                ),
+              ],
+            )
+          : const SizedBox(
+              height: 190,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.visibility_off_rounded,
+                      size: 32,
+                      color: AppTheme.textSecondary,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Nominal disembunyikan',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _LegendDot(color: Colors.green, label: 'Pemasukan'),
-              const SizedBox(width: 24),
-              _LegendDot(color: Colors.red, label: 'Pengeluaran'),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -524,12 +582,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     );
   }
 
-  // 3. Tambahkan parameter Color barColor
   Widget _buildCategoryList(
     List<MapEntry<String, double>> categories,
     double totalAmount,
     Map<String, String> categoryNames,
     Color barColor,
+    bool isBalanceVisible,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -562,10 +620,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                       ),
                     ),
                     Text(
-                      CurrencyFormatter.format(entry.value),
-                      style: const TextStyle(
+                      isBalanceVisible
+                          ? '${barColor == Colors.green ? '+' : '-'}${CurrencyFormatter.format(entry.value)}'
+                          : '${barColor == Colors.green ? '+' : '-'} Rp ***',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
+                        color: barColor,
                       ),
                     ),
                   ],
@@ -599,6 +660,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildTransactionTile(
     TransactionModel transaction,
     Map<String, String> categoryNames,
+    bool isBalanceVisible,
   ) {
     final isIncome = transaction.isIncome;
     final color = isIncome ? Colors.green : Colors.red;
@@ -606,6 +668,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final categoryName = transaction.categoryId == null
         ? 'Tanpa Kategori'
         : categoryNames[transaction.categoryId] ?? 'Kategori tidak ditemukan';
+
+    final amountText = isBalanceVisible
+        ? '${isIncome ? '+' : '-'}'
+              '${CurrencyFormatter.format(transaction.amount)}'
+        : '${isIncome ? '+' : '-'}'
+              'Rp ***';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 9),
@@ -661,8 +729,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           ),
           const SizedBox(width: 8),
           Text(
-            '${isIncome ? '+' : '-'}'
-            '${CurrencyFormatter.format(transaction.amount)}',
+            amountText,
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.bold,
