@@ -823,7 +823,11 @@ class _SummaryCard extends StatelessWidget {
               isVisible ? CurrencyFormatter.format(amount) : 'Rp ***',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
         ],
       ),
