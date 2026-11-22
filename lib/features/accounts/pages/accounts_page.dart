@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/account_model.dart';
 import '../providers/account_provider.dart';
+import '../../../core/providers/balance_visibility_provider.dart';
 import 'account_form_page.dart';
 
 class AccountsPage extends ConsumerWidget {
@@ -65,9 +65,7 @@ class AccountsPage extends ConsumerWidget {
   }) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => AccountFormPage(account: account),
-      ),
+      MaterialPageRoute(builder: (_) => AccountFormPage(account: account)),
     );
 
     ref.invalidate(accountsProvider);
@@ -79,9 +77,7 @@ class AccountsPage extends ConsumerWidget {
   ) async {
     if (accountNumber.trim().isEmpty) return;
 
-    await Clipboard.setData(
-      ClipboardData(text: accountNumber),
-    );
+    await Clipboard.setData(ClipboardData(text: accountNumber));
 
     if (!context.mounted) return;
 
@@ -91,11 +87,7 @@ class AccountsPage extends ConsumerWidget {
         const SnackBar(
           content: Row(
             children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: Colors.white,
-                size: 20,
-              ),
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
               SizedBox(width: 10),
               Text('Nomor berhasil disalin.'),
             ],
@@ -152,6 +144,7 @@ class AccountsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
     final totalAsync = ref.watch(totalBalanceProvider);
+    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -173,9 +166,7 @@ class AccountsPage extends ConsumerWidget {
           await ref.read(accountsProvider.future);
         },
         child: accountsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -209,14 +200,15 @@ class AccountsPage extends ConsumerWidget {
             ],
           ),
           data: (accounts) {
-            final activeCount =
-                accounts.where((account) => account.isActive).length;
+            final activeCount = accounts
+                .where((account) => account.isActive)
+                .length;
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
               children: [
-                _buildBalanceCard(totalAsync),
+                _buildBalanceCard(totalAsync, isBalanceVisible),
 
                 const SizedBox(height: 28),
 
@@ -234,9 +226,7 @@ class AccountsPage extends ConsumerWidget {
                       '$activeCount/${accounts.length} akun aktif',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -252,6 +242,7 @@ class AccountsPage extends ConsumerWidget {
                       context,
                       ref,
                       account,
+                      isBalanceVisible,
                     ),
                   ),
               ],
@@ -262,15 +253,15 @@ class AccountsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildBalanceCard(AsyncValue<double> totalAsync) {
+  Widget _buildBalanceCard(
+    AsyncValue<double> totalAsync,
+    bool isBalanceVisible,
+  ) {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF2563EB),
-            Color(0xFF1D4ED8),
-          ],
+          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -313,7 +304,7 @@ class AccountsPage extends ConsumerWidget {
               style: TextStyle(color: Colors.white),
             ),
             data: (total) => Text(
-              _formatCurrency(total),
+              isBalanceVisible ? _formatCurrency(total) : 'Rp ******',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 28,
@@ -324,10 +315,7 @@ class AccountsPage extends ConsumerWidget {
           const SizedBox(height: 8),
           const Text(
             'Akumulasi saldo seluruh akun aktif',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
       ),
@@ -338,6 +326,7 @@ class AccountsPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AccountModel account,
+    bool isBalanceVisible,
   ) {
     final color = _accountColor(account.accountType);
 
@@ -347,19 +336,13 @@ class AccountsPage extends ConsumerWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outlineVariant
+          color: Theme.of(context).colorScheme.outlineVariant
               .withValues(alpha: 0.6),
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _openForm(
-          context,
-          ref,
-          account: account,
-        ),
+        onTap: () => _openForm(context, ref, account: account),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -371,10 +354,7 @@ class AccountsPage extends ConsumerWidget {
                   color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  _accountIcon(account.accountType),
-                  color: color,
-                ),
+                child: Icon(_accountIcon(account.accountType), color: color),
               ),
 
               const SizedBox(width: 14),
@@ -402,9 +382,7 @@ class AccountsPage extends ConsumerWidget {
                       ].join(' • '),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
 
@@ -419,10 +397,7 @@ class AccountsPage extends ConsumerWidget {
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onLongPress: () {
-                          _copyAccountNumber(
-                            context,
-                            account.accountNumber!,
-                          );
+                          _copyAccountNumber(context, account.accountNumber!);
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -468,13 +443,13 @@ class AccountsPage extends ConsumerWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      _formatCurrency(account.currentBalance),
+                      isBalanceVisible
+                          ? _formatCurrency(account.currentBalance)
+                          : 'Rp ***',
                       style: TextStyle(
                         color: account.isActive
                             ? color
-                            : Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -505,21 +480,14 @@ class AccountsPage extends ConsumerWidget {
                     value: account.isActive,
                     activeTrackColor: const Color(0xFF059669),
                     onChanged: (value) {
-                      _changeAccountStatus(
-                        context,
-                        ref,
-                        account,
-                        value,
-                      );
+                      _changeAccountStatus(context, ref, account, value);
                     },
                   ),
                   Text(
                     'Status',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -537,9 +505,7 @@ class AccountsPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -551,10 +517,7 @@ class AccountsPage extends ConsumerWidget {
           const SizedBox(height: 16),
           const Text(
             'Belum Ada Akun',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
           const SizedBox(height: 8),
           Text(

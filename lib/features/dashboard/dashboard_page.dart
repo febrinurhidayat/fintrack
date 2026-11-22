@@ -10,45 +10,58 @@ import '../transactions/pages/transactions_page.dart';
 import '../transactions/providers/transaction_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/providers/balance_visibility_provider.dart';
 import '../profile/providers/profile_provider.dart';
 
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
-  Future<void> _openAccounts(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  Future<void> _openAccounts(BuildContext context) async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AccountsPage()),
     );
 
-    ref.invalidate(accountsProvider);
+    if (!mounted) return;
+    _refreshData();
   }
 
-  Future<void> _openTransactions(BuildContext context, WidgetRef ref) async {
+  Future<void> _openTransactions(BuildContext context) async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const TransactionsPage()),
     );
 
-    _refreshData(ref);
+    if (!mounted) return;
+    _refreshData();
   }
 
-  Future<void> _addTransaction(BuildContext context, WidgetRef ref) async {
+  Future<void> _addTransaction(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const TransactionFormPage()),
     );
 
+    if (!mounted) return;
+
     if (result == true) {
-      _refreshData(ref);
+      _refreshData();
     }
   }
 
-  Future<void> _refreshData(WidgetRef ref) async {
+  Future<void> _refreshData() async {
     ref.invalidate(accountsProvider);
+    ref.invalidate(activeAccountsProvider);
+    ref.invalidate(totalBalanceProvider);
     ref.invalidate(transactionsProvider);
     ref.invalidate(incomeCategoriesProvider);
     ref.invalidate(expenseCategoriesProvider);
+    ref.invalidate(profileProvider);
 
     await Future.wait([
       ref.read(accountsProvider.future),
@@ -57,12 +70,12 @@ class DashboardPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final totalBalanceAsync = ref.watch(totalBalanceProvider);
     final accountsAsync = ref.watch(activeAccountsProvider);
     final transactionsAsync = ref.watch(transactionsProvider);
-
     final profileAsync = ref.watch(profileProvider);
+    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
 
     final profile = profileAsync.when(
       data: (data) => data,
@@ -140,7 +153,7 @@ class DashboardPage extends ConsumerWidget {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => _refreshData(ref),
+          onRefresh: _refreshData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(20),
@@ -176,13 +189,40 @@ class DashboardPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 14),
                       totalBalanceAsync.when(
-                        data: (balance) => Text(
-                          CurrencyFormatter.format(balance),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        data: (balance) => Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                isBalanceVisible
+                                    ? CurrencyFormatter.format(balance)
+                                    : 'Rp ******',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: isBalanceVisible
+                                  ? 'Sembunyikan saldo'
+                                  : 'Tampilkan saldo',
+                              onPressed: () {
+                                ref
+                                    .read(balanceVisibilityProvider.notifier)
+                                    .toggle();
+                              },
+                              icon: Icon(
+                                isBalanceVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ],
                         ),
                         loading: () => const SizedBox(
                           height: 34,
@@ -221,7 +261,7 @@ class DashboardPage extends ConsumerWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _openAccounts(context, ref),
+                      onPressed: () => _openAccounts(context),
                       child: const Text('Lihat Semua'),
                     ),
                   ],
@@ -232,7 +272,7 @@ class DashboardPage extends ConsumerWidget {
                   data: (accounts) {
                     if (accounts.isEmpty) {
                       return _EmptyAccounts(
-                        onAdd: () => _openAccounts(context, ref),
+                        onAdd: () => _openAccounts(context),
                       );
                     }
 
@@ -290,9 +330,12 @@ class DashboardPage extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  CurrencyFormatter.format(
-                                    account.currentBalance,
-                                  ),
+                                  isBalanceVisible
+                                      ? CurrencyFormatter.format(
+                                          account.currentBalance,
+                                        )
+                                      : 'Rp ***',
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
@@ -306,7 +349,7 @@ class DashboardPage extends ConsumerWidget {
                           Align(
                             alignment: Alignment.center,
                             child: TextButton(
-                              onPressed: () => _openAccounts(context, ref),
+                              onPressed: () => _openAccounts(context),
                               child: const Text('Lihat akun lainnya'),
                             ),
                           ),
@@ -366,6 +409,7 @@ class DashboardPage extends ConsumerWidget {
                         icon: Icons.trending_up_rounded,
                         color: Colors.green,
                         isLoading: transactionsAsync.isLoading,
+                        isVisible: isBalanceVisible,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -376,6 +420,7 @@ class DashboardPage extends ConsumerWidget {
                         icon: Icons.trending_down_rounded,
                         color: Colors.red,
                         isLoading: transactionsAsync.isLoading,
+                        isVisible: isBalanceVisible,
                       ),
                     ),
                   ],
@@ -404,7 +449,7 @@ class DashboardPage extends ConsumerWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _openTransactions(context, ref),
+                      onPressed: () => _openTransactions(context),
                       child: const Text('Lihat Semua'),
                     ),
                   ],
@@ -453,15 +498,17 @@ class DashboardPage extends ConsumerWidget {
                   data: (items) {
                     if (items.isEmpty) {
                       return _EmptyTransactions(
-                        onAdd: () => _addTransaction(context, ref),
+                        onAdd: () => _addTransaction(context),
                       );
                     }
 
                     final recentTransactions = items.take(5).toList();
 
-                    final accounts = accountsAsync.asData?.value ?? [];
+                    final currentAccounts = accountsAsync.asData?.value ?? [];
+
                     final accountNames = {
-                      for (final account in accounts) account.id: account.name,
+                      for (final account in currentAccounts)
+                        account.id: account.name,
                     };
 
                     return Column(
@@ -472,13 +519,14 @@ class DashboardPage extends ConsumerWidget {
                             accountName:
                                 accountNames[transaction.accountId] ??
                                 'Akun tidak ditemukan',
+                            isBalanceVisible: isBalanceVisible,
                           ),
                         ),
                         if (items.length > 5)
                           Align(
                             alignment: Alignment.center,
                             child: TextButton(
-                              onPressed: () => _openTransactions(context, ref),
+                              onPressed: () => _openTransactions(context),
                               child: const Text('Lihat transaksi lainnya'),
                             ),
                           ),
@@ -612,10 +660,12 @@ class _EmptyTransactions extends StatelessWidget {
 class _RecentTransactionTile extends StatelessWidget {
   final TransactionModel transaction;
   final String accountName;
+  final bool isBalanceVisible;
 
   const _RecentTransactionTile({
     required this.transaction,
     required this.accountName,
+    required this.isBalanceVisible,
   });
 
   @override
@@ -704,8 +754,10 @@ class _RecentTransactionTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '${isIncome ? '+' : '-'}'
-            '${CurrencyFormatter.format(transaction.amount)}',
+            isBalanceVisible
+                ? '${isIncome ? '+' : '-'}'
+                      '${CurrencyFormatter.format(transaction.amount)}'
+                : '${isIncome ? '+' : '-'} Rp ***',
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.bold,
@@ -725,6 +777,7 @@ class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool isLoading;
+  final bool isVisible;
 
   const _SummaryCard({
     required this.title,
@@ -732,6 +785,7 @@ class _SummaryCard extends StatelessWidget {
     required this.icon,
     required this.color,
     this.isLoading = false,
+    this.isVisible = true,
   });
 
   @override
@@ -766,7 +820,7 @@ class _SummaryCard extends StatelessWidget {
             )
           else
             Text(
-              CurrencyFormatter.format(amount),
+              isVisible ? CurrencyFormatter.format(amount) : 'Rp ***',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

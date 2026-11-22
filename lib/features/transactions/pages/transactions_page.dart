@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../transfers/pages/transfers_page.dart';
 import '../../accounts/models/account_model.dart';
 import '../../accounts/providers/account_provider.dart';
+import '../../../core/providers/balance_visibility_provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
@@ -98,6 +99,7 @@ class TransactionsPage extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
     final incomeCategoriesAsync = ref.watch(incomeCategoriesProvider);
     final expenseCategoriesAsync = ref.watch(expenseCategoriesProvider);
+    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
 
     final accounts = accountsAsync.asData?.value ?? <AccountModel>[];
 
@@ -208,6 +210,7 @@ class TransactionsPage extends ConsumerWidget {
                         color: Colors.green,
                         icon: Icons.trending_up_rounded,
                         formatCurrency: _formatCurrency,
+                        isVisible: isBalanceVisible,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -218,6 +221,7 @@ class TransactionsPage extends ConsumerWidget {
                         color: Colors.red,
                         icon: Icons.trending_down_rounded,
                         formatCurrency: _formatCurrency,
+                        isVisible: isBalanceVisible,
                       ),
                     ),
                   ],
@@ -385,7 +389,9 @@ class TransactionsPage extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  '${isIncome ? '+' : '-'}${_formatCurrency(transaction.amount)}',
+                                  isBalanceVisible
+                                      ? '${isIncome ? '+' : '-'}${_formatCurrency(transaction.amount)}'
+                                      : '${isIncome ? '+' : '-'}Rp ***',
                                   style: TextStyle(
                                     color: color,
                                     fontWeight: FontWeight.bold,
@@ -454,6 +460,7 @@ class _SummaryCard extends StatelessWidget {
   final Color color;
   final IconData icon;
   final String Function(double) formatCurrency;
+  final bool isVisible;
 
   const _SummaryCard({
     required this.title,
@@ -461,6 +468,7 @@ class _SummaryCard extends StatelessWidget {
     required this.color,
     required this.icon,
     required this.formatCurrency,
+    required this.isVisible,
   });
 
   @override
@@ -488,7 +496,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            formatCurrency(amount),
+            isVisible ? formatCurrency(amount) : 'Rp ******',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

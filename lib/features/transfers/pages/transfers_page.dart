@@ -1,4 +1,3 @@
-
 import 'package:fintrack/core/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../accounts/models/account_model.dart';
 import '../../accounts/providers/account_provider.dart';
+import '../../../core/providers/balance_visibility_provider.dart';
 import '../models/transfer_model.dart';
 import '../providers/transfer_provider.dart';
 import 'transfer_form_page.dart';
@@ -17,10 +17,7 @@ class TransfersPage extends ConsumerWidget {
     return DateFormat('dd MMM yyyy', 'id_ID').format(date);
   }
 
-  String _accountName(
-    String accountId,
-    Map<String, AccountModel> accountMap,
-  ) {
+  String _accountName(String accountId, Map<String, AccountModel> accountMap) {
     return accountMap[accountId]?.name ?? 'Rekening tidak ditemukan';
   }
 
@@ -37,9 +34,7 @@ class TransfersPage extends ConsumerWidget {
   void _openTransferForm(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const TransferFormPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const TransferFormPage()),
     );
   }
 
@@ -47,6 +42,7 @@ class TransfersPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final transfersAsync = ref.watch(transfersProvider);
     final accountsAsync = ref.watch(accountsProvider);
+    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -65,9 +61,7 @@ class TransfersPage extends ConsumerWidget {
         label: const Text('Transfer'),
       ),
       body: transfersAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -85,10 +79,7 @@ class TransfersPage extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                ),
+                Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () => ref.invalidate(transfersProvider),
@@ -101,9 +92,7 @@ class TransfersPage extends ConsumerWidget {
         ),
         data: (transfers) {
           return accountsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stack) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -115,8 +104,7 @@ class TransfersPage extends ConsumerWidget {
             ),
             data: (accounts) {
               final accountMap = {
-                for (final account in accounts)
-                  account.id: account,
+                for (final account in accounts) account.id: account,
               };
 
               if (transfers.isEmpty) {
@@ -156,15 +144,17 @@ class TransfersPage extends ConsumerWidget {
 
               final sortedTransfers = [...transfers]
                 ..sort((a, b) {
-                  final dateComparison =
-                      b.transferDate.compareTo(a.transferDate);
+                  final dateComparison = b.transferDate.compareTo(
+                    a.transferDate,
+                  );
 
                   if (dateComparison != 0) {
                     return dateComparison;
                   }
 
-                  return (b.createdAt ?? b.transferDate)
-                      .compareTo(a.createdAt ?? a.transferDate);
+                  return (b.createdAt ?? b.transferDate).compareTo(
+                    a.createdAt ?? a.transferDate,
+                  );
                 });
 
               final totalTransfers = sortedTransfers.length;
@@ -192,6 +182,7 @@ class TransfersPage extends ConsumerWidget {
                         context,
                         transfer,
                         accountMap,
+                        isBalanceVisible,
                       );
                     }),
                   ],
@@ -215,18 +206,11 @@ class TransfersPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.swap_horiz_rounded,
-            color: Colors.white,
-            size: 30,
-          ),
+          const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 30),
           const SizedBox(height: 12),
           const Text(
             'Total Aktivitas Transfer',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
           const SizedBox(height: 4),
           Text(
@@ -246,29 +230,24 @@ class TransfersPage extends ConsumerWidget {
     BuildContext context,
     TransferModel transfer,
     Map<String, AccountModel> accountMap,
+    bool isBalanceVisible,
   ) {
     final theme = Theme.of(context);
 
-    final fromAccount = _accountName(
-      transfer.fromAccountId,
-      accountMap,
-    );
+    final fromAccount = _accountName(transfer.fromAccountId, accountMap);
 
-    final toAccount = _accountName(
-      transfer.toAccountId,
-      accountMap,
-    );
+    final toAccount = _accountName(transfer.toAccountId, accountMap);
 
-    final amount = CurrencyFormatter.format(transfer.amount);
+    final amount = isBalanceVisible
+        ? CurrencyFormatter.format(transfer.amount)
+        : 'Rp ***';
 
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: theme.dividerColor.withValues(alpha: 0.4),
-        ),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -333,17 +312,12 @@ class TransfersPage extends ConsumerWidget {
                 const SizedBox(width: 10),
                 const SizedBox(
                   width: 55,
-                  child: Text(
-                    'Dari',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  child: Text('Dari', style: TextStyle(color: Colors.grey)),
                 ),
                 Expanded(
                   child: Text(
                     fromAccount,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -361,17 +335,12 @@ class TransfersPage extends ConsumerWidget {
                 const SizedBox(width: 10),
                 const SizedBox(
                   width: 55,
-                  child: Text(
-                    'Ke',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  child: Text('Ke', style: TextStyle(color: Colors.grey)),
                 ),
                 Expanded(
                   child: Text(
                     toAccount,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -385,11 +354,7 @@ class TransfersPage extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.notes_rounded,
-                    size: 18,
-                    color: Colors.grey,
-                  ),
+                  const Icon(Icons.notes_rounded, size: 18, color: Colors.grey),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
