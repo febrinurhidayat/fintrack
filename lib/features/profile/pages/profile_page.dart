@@ -714,11 +714,10 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 const Padding(
                   padding: EdgeInsets.only(left: 4, bottom: 10),
                   child: Text(
-                    'Zona Berbahaya',
+                    'Hapus Permanen',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
                     ),
                   ),
                 ),
