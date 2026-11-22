@@ -40,7 +40,6 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _repository.signIn(email: email, password: password);
-
     } catch (e) {
       if (!mounted) return;
       _showMessage('Login gagal: $e');
@@ -64,10 +63,11 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  size: 76,
-                  color: Colors.blue,
+                Image.asset(
+                  'assets/icon/icon.png',
+                  width: 76,
+                  height: 76,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 20),
                 const Text(
