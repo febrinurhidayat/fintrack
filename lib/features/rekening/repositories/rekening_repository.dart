@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
-import '../models/account_model.dart';
+import '../models/rekening_model.dart';
 
 class AccountRepository {
   final SupabaseClient _client = SupabaseConfig.client;

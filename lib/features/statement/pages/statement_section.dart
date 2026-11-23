@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../accounts/providers/account_provider.dart';
+import '../../rekening/providers/rekening_provider.dart';
 import '../providers/statement_provider.dart';
 import '../services/statement_pdf_service.dart';
 
@@ -204,7 +204,9 @@ class _StatementSectionState extends ConsumerState<StatementSection> {
                     return DropdownMenuItem<String>(
                       value: account.id as String,
                       child: Text(
-                        account.name as String,
+                        account.bankName != null && account.bankName!.isNotEmpty
+                            ? '${account.name} - ${account.bankName}'
+                            : account.name,
                         overflow: TextOverflow.ellipsis,
                       ),
                     );

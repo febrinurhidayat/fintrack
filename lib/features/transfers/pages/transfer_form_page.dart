@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../features/accounts/models/account_model.dart';
-import '../../../features/accounts/providers/account_provider.dart';
+import '../../../features/rekening/models/rekening_model.dart';
+import '../../../features/rekening/providers/rekening_provider.dart';
 import '../providers/transfer_provider.dart';
 
 class TransferFormPage extends ConsumerStatefulWidget {

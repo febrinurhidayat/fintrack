@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../accounts/pages/accounts_page.dart';
-import '../accounts/providers/account_provider.dart';
+import '../rekening/pages/rekening_page.dart';
+import '../rekening/providers/rekening_provider.dart';
 import '../transactions/models/transaction_model.dart';
 import '../transactions/pages/transaction_form_page.dart';
 import '../transactions/pages/transactions_page.dart';

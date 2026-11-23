@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../accounts/models/account_model.dart';
-import '../../accounts/providers/account_provider.dart';
+import '../../rekening/models/rekening_model.dart';
+import '../../rekening/providers/rekening_provider.dart';
 
 import '../../transactions/models/transaction_model.dart';
 import '../../transactions/providers/transaction_provider.dart';

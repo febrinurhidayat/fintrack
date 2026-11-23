@@ -1,8 +1,8 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/account_model.dart';
-import '../repositories/account_repository.dart';
+import '../models/rekening_model.dart';
+import '../repositories/rekening_repository.dart';
 
 final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   return AccountRepository();

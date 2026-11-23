@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/account_model.dart';
-import '../providers/account_provider.dart';
+import '../models/rekening_model.dart';
+import '../providers/rekening_provider.dart';
 
 class AccountFormPage extends ConsumerStatefulWidget {
   final AccountModel? account;
@@ -148,8 +148,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
         SnackBar(
           content: Text(
             _isEditing
-                ? 'Akun berhasil diperbarui.'
-                : 'Akun berhasil ditambahkan.',
+                ? 'Rekening berhasil diperbarui.'
+                : 'Rekening berhasil ditambahkan.',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -161,7 +161,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal menyimpan akun: $e'),
+          content: Text('Gagal menyimpan rekening: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -184,11 +184,11 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
             color: Colors.red,
             size: 36,
           ),
-          title: const Text('Hapus Akun?'),
+          title: const Text('Hapus Rekening?'),
           content: Text(
-            'Apakah Anda yakin ingin menghapus akun '
+            'Apakah Anda yakin ingin menghapus Rekening '
             '"${widget.account!.name}" secara permanen?\n\n'
-            'Akun yang sudah memiliki riwayat transaksi atau '
+            'Rekening yang sudah memiliki riwayat transaksi atau '
             'transfer tidak dapat dihapus.',
           ),
           actions: [
@@ -228,7 +228,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Akun berhasil dihapus secara permanen.'),
+          content: Text('Rekening berhasil dihapus secara permanen.'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -244,7 +244,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal menghapus akun: $message'),
+          content: Text('Gagal menghapus Rekening: $message'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -290,7 +290,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Akun' : 'Tambah Akun'),
+        title: Text(_isEditing ? 'Edit Rekening' : 'Tambah Rekening'),
       ),
       body: SafeArea(
         child: Form(
@@ -318,7 +318,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Informasi Akun',
+                            'Informasi Rekening',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -326,7 +326,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Masukkan informasi akun keuangan Anda.',
+                            'Masukkan informasi Rekening keuangan Anda.',
                             style: TextStyle(fontSize: 12),
                           ),
                         ],
@@ -339,7 +339,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
               const SizedBox(height: 26),
 
               const Text(
-                'Jenis Akun',
+                'Jenis Rekening',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
@@ -347,7 +347,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
               DropdownButtonFormField<String>(
                 initialValue: _accountType,
                 decoration: _decoration(
-                  'Pilih jenis akun',
+                  'Pilih jenis Rekening',
                   Icons.category_outlined,
                 ),
                 items: const [
@@ -379,26 +379,26 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
 
               const SizedBox(height: 20),
 
-              // Semua jenis akun memiliki nama akun.
+              // Semua jenis Rekening memiliki nama Rekening.
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
                 enabled: !isBusy,
                 decoration: _decoration(
-                  'Nama Akun',
+                  'Nama Rekening',
                   Icons.wallet_outlined,
                   hint: 'Contoh: BCA Utama, Dompet Pribadi',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Nama akun wajib diisi.';
+                    return 'Nama Rekening wajib diisi.';
                   }
 
                   return null;
                 },
               ),
 
-              // Khusus akun bank.
+              // Khusus Rekening bank.
               if (_isBank) ...[
                 const SizedBox(height: 20),
 
@@ -414,7 +414,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                 ),
               ],
 
-              // Bank dan E-Wallet menggunakan nomor akun.
+              // Bank dan E-Wallet menggunakan nomor Rekening.
               if (_isBank || _isEwallet) ...[
                 const SizedBox(height: 20),
 
@@ -427,7 +427,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                     Icons.numbers_outlined,
                     hint: _isBank
                         ? 'Masukkan nomor rekening'
-                        : 'Masukkan nomor HP atau akun E-Wallet',
+                        : 'Masukkan nomor HP atau Rekening E-Wallet',
                   ),
                 ),
               ],
@@ -467,7 +467,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
               const SizedBox(height: 8),
 
               Text(
-                'Masukkan saldo yang tersedia ketika akun ini '
+                'Masukkan saldo yang tersedia ketika Rekening ini '
                 'mulai dicatat di FinTrack.',
                 style: TextStyle(
                   fontSize: 12,
@@ -502,7 +502,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                       : Text(
                           _isEditing
                               ? 'Simpan Perubahan'
-                              : 'Simpan Akun',
+                              : 'Simpan Rekening',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -531,8 +531,8 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                         : const Icon(Icons.delete_outline),
                     label: Text(
                       _deleting
-                          ? 'Menghapus Akun...'
-                          : 'Hapus Akun',
+                          ? 'Menghapus Rekening...'
+                          : 'Hapus Rekening',
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
@@ -547,7 +547,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage> {
                 const SizedBox(height: 10),
 
                 const Text(
-                  'Akun yang sudah memiliki riwayat transaksi '
+                  'Rekening yang sudah memiliki riwayat transaksi '
                   'atau transfer tidak dapat dihapus permanen.',
                   textAlign: TextAlign.center,
                   style: TextStyle(

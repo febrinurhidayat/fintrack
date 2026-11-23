@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../transfers/pages/transfers_page.dart';
-import '../../accounts/models/account_model.dart';
-import '../../accounts/providers/account_provider.dart';
+import '../../rekening/models/rekening_model.dart';
+import '../../rekening/providers/rekening_provider.dart';
 import '../../../core/providers/balance_visibility_provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
@@ -443,12 +443,11 @@ class TransactionsPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _openTransactionForm(context, ref);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Transaksi'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openTransactionForm(context, ref),
+        backgroundColor: const Color(0xffdc2626),
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
       ),
     );
   }

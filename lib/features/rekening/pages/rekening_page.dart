@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 
-import '../models/account_model.dart';
-import '../providers/account_provider.dart';
+import '../models/rekening_model.dart';
+import '../providers/rekening_provider.dart';
 import '../../../core/providers/balance_visibility_provider.dart';
-import 'account_form_page.dart';
+import 'rekening_form_page.dart';
 
 class AccountsPage extends ConsumerWidget {
   const AccountsPage({super.key});
@@ -121,8 +121,8 @@ class AccountsPage extends ConsumerWidget {
         SnackBar(
           content: Text(
             isActive
-                ? 'Akun ${account.name} berhasil diaktifkan.'
-                : 'Akun ${account.name} berhasil dinonaktifkan.',
+                ? 'Rekening ${account.name} berhasil diaktifkan.'
+                : 'Rekening ${account.name} berhasil dinonaktifkan.',
           ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
@@ -133,7 +133,7 @@ class AccountsPage extends ConsumerWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal mengubah status akun: $e'),
+          content: Text('Gagal mengubah status Rekening: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -149,16 +149,15 @@ class AccountsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Akun Keuangan',
+          'Rekening Keuangan',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _openForm(context, ref),
         backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Akun'),
+        child: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -179,7 +178,7 @@ class AccountsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Gagal memuat akun',
+                'Gagal memuat Rekening',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -216,14 +215,14 @@ class AccountsPage extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Daftar Akun',
+                      'Daftar Rekening',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '$activeCount/${accounts.length} akun aktif',
+                      '$activeCount/${accounts.length} rekening aktif',
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -314,7 +313,7 @@ class AccountsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Akumulasi saldo seluruh akun aktif',
+            'Akumulasi saldo seluruh Rekening aktif',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
@@ -516,7 +515,7 @@ class AccountsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Belum Ada Akun',
+            'Belum Ada Rekening',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
           const SizedBox(height: 8),
@@ -532,7 +531,7 @@ class AccountsPage extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: () => _openForm(context, ref),
             icon: const Icon(Icons.add),
-            label: const Text('Tambah Akun Pertama'),
+            label: const Text('Tambah Rekening Pertama'),
           ),
         ],
       ),

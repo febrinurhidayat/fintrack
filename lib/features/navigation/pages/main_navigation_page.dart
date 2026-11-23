@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../reports/pages/reports_page.dart';
 import '../../dashboard/dashboard_page.dart';
-import '../../accounts/pages/accounts_page.dart';
+import '../../rekening/pages/rekening_page.dart';
 import '../../transactions/pages/transactions_page.dart';
 import '../../profile/pages/profile_page.dart';
 

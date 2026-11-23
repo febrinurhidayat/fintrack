@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../accounts/models/account_model.dart';
-import '../../accounts/providers/account_provider.dart';
+import '../../rekening/models/rekening_model.dart';
+import '../../rekening/providers/rekening_provider.dart';
 import '../../../core/providers/balance_visibility_provider.dart';
 import '../models/transfer_model.dart';
 import '../providers/transfer_provider.dart';
@@ -55,10 +55,11 @@ class TransfersPage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _openTransferForm(context),
-        icon: const Icon(Icons.swap_horiz_rounded),
-        label: const Text('Transfer'),
+        backgroundColor: const Color(0xff16a34a),
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.swap_horiz_rounded),
       ),
       body: transfersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

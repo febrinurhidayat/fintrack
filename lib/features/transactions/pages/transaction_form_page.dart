@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../accounts/providers/account_provider.dart';
+import '../../rekening/providers/rekening_provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
@@ -99,7 +99,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
     if (_accountId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih akun terlebih dahulu.')),
+        const SnackBar(content: Text('Silakan pilih rekening terlebih dahulu.')),
       );
       return;
     }
@@ -374,7 +374,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 const SizedBox(height: 20),
 
                 const Text(
-                  'Pilih Akun',
+                  'Pilih Rekening',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
